@@ -1,5 +1,5 @@
 import { LogOut, PlusIcon, SendIcon, Settings } from "lucide-react";
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect} from "react";
 import { useNavigate } from "react-router-dom";
 import io from "socket.io-client";
 
@@ -77,15 +77,15 @@ const ChatApp = () => {
         .then((data) => setMessages(data))
         .catch((error) => console.error("Error fetching messages:", error));
     }
-  }, [selectedUser, userId, token]);
+  }, [selectedUser]);
 
   const sendMessage = (event) => {
     event.preventDefault();
     if (socket) {
-      const receiverId = selectedUser.id;
+      const receiver_id = selectedUser.id;
       const data = {
-        senderId: userId,
-        receiverId,
+        sender_id: userId,
+        receiver_id,
         message,
       };
       socket.emit("sendMessage", data);
@@ -99,6 +99,16 @@ const ChatApp = () => {
     navigate("/");
   };
 
+  const handleUserSelection = (user) => {
+    setSelectedUser(user);
+    if (socket) {
+      const senderId = userId;
+      const receiverId = user.id;
+      const roomName = `${Math.min(senderId, receiverId)}_${Math.max(senderId, receiverId)}`;
+      socket.emit('joinRoom', roomName);
+    }
+  };
+
   const renderUserList = (users, title) => (
     <div className="mb-4">
       <h3 className="text-md font-semibold border-y border-black">{title}</h3>
@@ -106,7 +116,7 @@ const ChatApp = () => {
         <div
           key={user.id}
           className="flex-1 truncate cursor-pointer border border-black rounded-sm p-2 my-2"
-          onClick={() => setSelectedUser(user)}
+          onClick={() => handleUserSelection(user)}
         >
           <div className="font-medium text-sm capitalize text-gray-600">
             {user.name}, {user.status === 'online' ? <span className="text-green-500">Online</span> : 'Offline'}
